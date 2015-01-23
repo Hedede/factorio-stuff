@@ -1,0 +1,10 @@
+{
+  "name": "BuxProf tech",
+  "version": "0.0.0",
+  "title": "BuxProf tech",
+  "author": "Hedede",
+  "contact": "hededrk@gmail.com",
+  "homepage": "",
+  "dependencies": ["base >= 0.11.8"],
+  "description": "Adds nothing."
+}
