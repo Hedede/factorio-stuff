@@ -11,7 +11,7 @@ rules_text = {
 function rules.on_player_created(event)
 	local player = game.players[event.player_index]
 
-	player.print("Welcome to Hedede's eternal night railworld! This is a train-based map, and I have several guidelines:")
+	player.print("Welcome to Hedede's railworld! This is a train-based map, and I have several guidelines:")
 	for _, text in ipairs(rules_text) do
 		player.print(text)
 	end
@@ -67,16 +67,9 @@ function rules.on_player_leave(event)
 	end
 end
 
-
-function rules.on_gui_click(event)
-	local player = event.player
-	local name   = event.element.name
-
-	if name == "rules-button" then
-		local state = player.gui.left["rules-frame"].style.visible
-		player.gui.left["rules-frame"].style.visible = not state
-		return true
-	end
+gui.handlers["rules-button"] = function(event)
+	local state = event.player.gui.left["rules-frame"].style.visible
+	event.player.gui.left["rules-frame"].style.visible = not state
 end
 
 events.register_event(defines.events.on_gui_click, rules.on_gui_click)

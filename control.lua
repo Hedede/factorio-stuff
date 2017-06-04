@@ -3,8 +3,8 @@ require("eventsystem")
 require("silo-script")
 --require("deathchest") -- no longer necessary
 require("watcher")
---require("rules")
---require("tasklist")
+require("rules")
+require("tasklist")
 require("surfaces")
 
 local version = 1

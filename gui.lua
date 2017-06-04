@@ -14,7 +14,7 @@ function gui.on_gui_click(event)
 	local player  = game.players[event.player_index]
 	local element = event.element
 
-	game.print(element.name)
+	--game.print(element.name)
 	if (not player.valid) or (not element.valid) then
 		return
 	end

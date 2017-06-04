@@ -5,10 +5,40 @@ function task_list.init()
 	end
 end
 
-local function clear_element(element)
-	if element ~= nil then
-		for i, child in pairs(element.children_names) do
-			element[child].destroy()
+function task_list.delete_task(player, index)
+	local descr = global.task_list[index]
+	if descr ~= nil then
+		game.print(player.name .. ' has removed task "' .. descr .. '"')
+	end
+	table.remove( global.task_list, index )
+	task_list.update_all();
+end
+
+gui.handlers["task-button"] = function(event)
+	local state = event.player.gui.center["task-frame"].style.visible
+	event.player.gui.center["task-frame"].style.visible = not state
+end
+gui.handlers["button-close-tasks"] = function(event)
+	event.player.gui.center["task-frame"].style.visible = false
+end
+gui.handlers["button-add-task"] = function(event)
+	local player = event.player
+	local frame = player.gui.center["task-frame"]
+	local descr = frame.flow.taskname.text
+	frame.flow.taskname.text = ""
+	if descr == "" or string.len(descr) > 256 then
+		return
+	end
+	table.insert( global.task_list, descr)
+	game.print(player.name .. ' has added task "' .. descr .. '"')
+
+	task_list.update_all();
+end
+
+local function create_per_task_handlers()
+	for i, task in pairs(global.task_list) do
+		gui.handlers["btn-del-"..i] = function(event)
+			task_list.delete_task(event.player, i)
 		end
 	end
 end
@@ -16,7 +46,7 @@ end
 function task_list.update(player)
 	local frame = player.gui.center["task-frame"]
 	local content = frame.tasks
-	clear_element(content)
+	gui.clear_element(content)
 	for i, task in pairs(global.task_list) do
 		local flow = content.add{
 			type = "flow",
@@ -40,6 +70,7 @@ function task_list.update_all()
 	for i, player in pairs(game.connected_players) do
 		task_list.update(player)
 	end
+	create_per_task_handlers()
 end
 
 function task_list.on_player_join(event)
@@ -83,6 +114,7 @@ function task_list.on_player_join(event)
 	end
 
 	task_list.update(player);
+	create_per_task_handlers();
 end
 
 function task_list.on_player_leave(event)
@@ -94,49 +126,5 @@ function task_list.on_player_leave(event)
 		player.gui.center["task-frame"].destroy()
 	end
 end
-
-
-function task_list.on_gui_click(event)
-	local player = event.player
-	local name   = event.element.name
-
-	if name == "task-button" then
-		local state = player.gui.center["task-frame"].style.visible
-		player.gui.center["task-frame"].style.visible = not state
-		return true
-	elseif name == "button-add-task" then
-		local frame = player.gui.center["task-frame"]
-		local descr = frame.flow.taskname.text
-		frame.flow.taskname.text = ""
-		if descr == "" or string.len(descr) > 256 then
-			return
-		end
-		table.insert( global.task_list, descr)
-		game.print(player.name .. ' has added task "' .. descr .. '"')
-		
-		task_list.update_all();
-		return true
-	elseif name == "button-close-tasks" then
-		player.gui.center["task-frame"].style.visible = false
-		return true
-	else
-		--player.print(name)
-		local zhuzh = string.match(name, "^btn%-del%-(.+)")
-		--player.print(zhuzh)
-		if zhuzh ~= nil then
-			local descr = global.task_list[tonumber(zhuzh)]
-			if descr ~= nil then
-				game.print(player.name .. ' has removed task "' .. descr .. '"')
-			end
-			table.remove( global.task_list, zhuzh )
-			task_list.update_all();
-
-			return true
-		end
-	end
-	return false
-end
-
-events.register_event(defines.events.on_gui_click, task_list.on_gui_click)
 
 return task_list
