@@ -6,6 +6,7 @@ require("watcher")
 require("rules")
 require("tasklist")
 require("surfaces")
+require("admintools")
 
 local version = 1
 
@@ -17,6 +18,7 @@ script.on_event(defines.events.on_player_created, function(event)
   player.insert{name="firearm-magazine", count=20}
   --player.insert{name="burner-mining-drill", count = 1}
   player.insert{name="stone-furnace", count = 2}
+  surfaces.teleport_player(player, surfaces.get_default())
   player.force.chart(player.surface, {{player.position.x - 200, player.position.y - 200}, {player.position.x + 200, player.position.y + 200}})
   rules.on_player_created(event)
   silo_script.gui_init(player)
@@ -44,8 +46,10 @@ end)
 
 script.on_init(function()
   global.version = version
+  surfaces.init()
   silo_script.init()
   task_list.init()
+  admin_tools.init()
 end)
 
 script.on_event(defines.events.on_rocket_launched, function(event)
@@ -56,8 +60,10 @@ script.on_configuration_changed(function(event)
   if global.version ~= version then
     global.version = version
   end
+  surfaces.init()
   silo_script.on_configuration_changed(event)
   task_list.init()
+  admin_tools.init()
 end)
 
 silo_script.add_remote_interface()

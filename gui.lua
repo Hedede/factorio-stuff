@@ -10,6 +10,12 @@ function gui.clear_element(element)
 	end
 end
 
+function gui.destroy_element(element)
+	if element ~= nil then
+		element.destroy()
+	end
+end
+
 function gui.on_gui_click(event)
 	local player  = game.players[event.player_index]
 	local element = event.element

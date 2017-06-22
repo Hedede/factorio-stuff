@@ -1,4 +1,27 @@
+surfaces    = {}
 surface_gui = {}
+
+function surfaces.init()
+	global.surfaces = {
+		default = "nauvis"
+	}
+end
+
+function surfaces.get_default()
+	if global.surfaces.default ~= nil then
+		return global.surfaces.default
+	end
+	return "nauvis"
+end
+
+function surfaces.teleport_player(player, name)
+	local surface = game.surfaces[name];
+	if surface ~= nil then
+		local pos = player.force.get_spawn_position(surface);
+		player.teleport(pos, surface)
+	end
+end
+
 local function create_surface(name, player)
 	local settings = game.surfaces["nauvis"].map_gen_settings
 	settings.seed = math.random(1,2147483648)
@@ -6,19 +29,6 @@ local function create_surface(name, player)
 	player.force.chart(game.surfaces[name], {{-250, -250}, {250, 250}})
 
 	surface_gui.update_all();
-end
-
-local function teleport_player(player, name)
-	local surface = game.surfaces[name];
-	if surface ~= nil then
-		local pos = player.force.get_spawn_position(surface);
-		player.teleport(pos, surface)
-	end
-	return true
-end
-
-local function btn_set_spawn_position(event)
-
 end
 
 gui.handlers["surfaces-button"] = function(event)
@@ -46,10 +56,16 @@ gui.handlers["button-set-spawn"] = function(event)
 	player.force.set_spawn_position(pos, player.surface);
 end
 
-local function create_btn_teleport_handlers()
+local function create_surface_button_handlers()
 	for name, surface in pairs(game.surfaces) do
 		gui.handlers["btn-teleport-"..name] = function(event)
-			teleport_player(event.player, name)
+			surfaces.teleport_player(event.player, name)
+		end
+	end
+	for name, surface in pairs(game.surfaces) do
+		gui.handlers["btn-default-"..name] = function(event)
+			global.surfaces.default = name
+			event.player.print("Surface "..name.." is now default surface")
 		end
 	end
 end
@@ -95,7 +111,7 @@ function surface_gui.create(player)
 		frame.style.visible = false
 	end
 
-	create_btn_teleport_handlers()
+	create_surface_button_handlers()
 end
 
 function surface_gui.update(player)
@@ -108,6 +124,13 @@ function surface_gui.update(player)
 			name = "flow-surf-"..name,
 			direction = "horizontal"
 		}
+		if player.admin then
+			flow.add{
+				type = "button",
+				name = "btn-default-"..name,
+				caption = "Default"
+			}
+		end
 		flow.add{
 			type = "button",
 			name = "btn-teleport-"..name,
@@ -122,7 +145,7 @@ function surface_gui.update(player)
 end
 
 function surface_gui.update_all()
-	create_btn_teleport_handlers()
+	create_surface_button_handlers()
 	for i, player in pairs(game.connected_players) do
 		surface_gui.update(player)
 	end
