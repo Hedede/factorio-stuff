@@ -40,4 +40,5 @@ end
 
 script.on_event(defines.events.on_gui_click, gui.on_gui_click)
 
+
 return gui
