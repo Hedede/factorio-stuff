@@ -1,27 +1,5 @@
-surfaces    = {}
+require("gui")
 surface_gui = {}
-
-function surfaces.init()
-	global.surfaces = {
-		default = "nauvis"
-	}
-end
-
-function surfaces.get_default()
-	if global.surfaces.default ~= nil then
-		return global.surfaces.default
-	end
-	return "nauvis"
-end
-
-function surfaces.teleport_player(player, name)
-	local surface = game.surfaces[name];
-	if surface ~= nil then
-		local pos = player.force.get_spawn_position(surface);
-		player.teleport(pos, surface)
-	end
-end
-
 local function create_surface(name, player)
 	local settings = game.surfaces["nauvis"].map_gen_settings
 	settings.seed = math.random(1,2147483648)
@@ -31,16 +9,7 @@ local function create_surface(name, player)
 	surface_gui.update_all();
 end
 
-gui.handlers["surfaces-button"] = function(event)
-	local player = event.player
-	local state = player.gui.center["surfaces-frame"].style.visible
-	player.gui.center["surfaces-frame"].style.visible = not state
-end
-gui.handlers["btn-close-surfaces"] = function(event)
-	event.player.gui.center["surfaces-frame"].style.visible = false
-
-end
-gui.handlers["button-add-surface"] = function(event)
+local function btn_create_surface(event)
 	local player = event.player
 	local frame = player.gui.center["surfaces-frame"]
 	local descr = frame.flow["name-input"].text
@@ -50,34 +19,38 @@ gui.handlers["button-add-surface"] = function(event)
 	end
 	create_surface(descr, player)
 end
-gui.handlers["button-set-spawn"] = function(event)
+
+local function teleport_player(player, name)
+	local surface = game.surfaces[name];
+	if surface ~= nil then
+		local pos = player.force.get_spawn_position(surface);
+		player.teleport(pos, surface)
+	end
+	return true
+end
+
+local function btn_set_spawn_position(event)
 	local player = event.player
 	local pos = player.position;
 	player.force.set_spawn_position(pos, player.surface);
 end
 
-local function create_surface_button_handlers()
-	for name, surface in pairs(game.surfaces) do
-		gui.handlers["btn-teleport-"..name] = function(event)
-			surfaces.teleport_player(event.player, name)
-		end
-	end
-	for name, surface in pairs(game.surfaces) do
-		gui.handlers["btn-default-"..name] = function(event)
-			global.surfaces.default = name
-			event.player.print("Surface "..name.." is now default surface")
-		end
-	end
-end
-
 function surface_gui.create(player)
 	if player.gui.top["surfaces-button"] == nil then
-		player.gui.top.add{
-			type = "button",
-			name = "surfaces-button",
-			caption = "Surfaces",
-			tooltip = "Click here to teleport to another surface."
-		}
+		gui.create_element(
+			player.gui.top,
+			{
+				type = "button",
+				name = "surfaces-button",
+				caption = "Surfaces",
+				tooltip = "Click here to teleport to another surface."
+			},
+			function(event)
+				local player = event.player
+				local state = player.gui.center["surfaces-frame"].style.visible
+				player.gui.center["surfaces-frame"].style.visible = not state
+			end
+		)
 	end
 
 	if player.gui.center["surfaces-frame"] == nil then
@@ -88,13 +61,25 @@ function surface_gui.create(player)
 		}
 
 		local flow = frame.add{ type = "flow", name = "flow", direction = "horizontal"}
-
 		if player.admin then
-			flow.add{ type = "button", name = "button-add-surface", caption = "Add" }
+			gui.create_element(
+				flow,
+				{ type = "button", name = "button-add-surface", caption = "Add" },
+				btn_create_surface
+			)
 			flow.add{ type = "textfield", name = "name-input" }
-			flow.add{ type = "button", name = "button-set-spawn", caption = "Set spawn point" }
+			gui.create_element(
+				flow,
+				{ type = "button", name = "button-set-spawn", caption = "Set spawn point" },
+				btn_set_spawn_position
+			)
 		end
-		flow.add{ type = "button", name = "btn-close-surfaces", caption = "Close" }
+		gui.create_element(
+			flow, { type = "button", caption = "Close" },
+			function(event)
+				event.player.gui.center["surfaces-frame"].style.visible = false
+			end
+		)
 
 		local scroll = frame.add{
 			type = "scroll-pane",
@@ -106,12 +91,11 @@ function surface_gui.create(player)
 
 		scroll.style.maximal_height = 565;
 		scroll.style.minimal_height = 565;
+		scroll.style.maximal_width  = 400;
 		scroll.style.minimal_width  = 400;
 
 		frame.style.visible = false
 	end
-
-	create_surface_button_handlers()
 end
 
 function surface_gui.update(player)
@@ -124,18 +108,19 @@ function surface_gui.update(player)
 			name = "flow-surf-"..name,
 			direction = "horizontal"
 		}
-		if player.admin then
-			flow.add{
+		gui.create_element(
+			flow,
+			{
 				type = "button",
-				name = "btn-default-"..name,
-				caption = "Default"
-			}
-		end
-		flow.add{
-			type = "button",
-			name = "btn-teleport-"..name,
-			caption = "Teleport"
-		}
+				name = "btn-teleport-"..name,
+				caption = "Teleport"
+
+			},
+			function(event)
+				local player = event.player
+				teleport_player(player, name)
+			end
+		)
 		flow.add{
 			type = "label",
 			name = "lbl-surface-"..name,
@@ -145,7 +130,6 @@ function surface_gui.update(player)
 end
 
 function surface_gui.update_all()
-	create_surface_button_handlers()
 	for i, player in pairs(game.connected_players) do
 		surface_gui.update(player)
 	end
